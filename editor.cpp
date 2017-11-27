@@ -61,12 +61,12 @@ void TextEditor::openFile(LPCTSTR lpszFilename) {
 #ifdef _UNICODE
     nTextSize = MultiByteToWideChar(CP_UTF8, 0,
         (LPCSTR)lpData, -1, NULL, 0);
-    _lpszText = new TCHAR[nTextSize];
+    _lpszText = new TCHAR[nTextSize + 1];
     MultiByteToWideChar(CP_UTF8, 0,
         (LPCSTR)lpData, -1, _lpszText, nTextSize);
 #else
     nTextSize = nFileSize;
-    _lpszText = new TCHAR[nTextSize];
+    _lpszText = new TCHAR[nTextSize + 1];
     _tcscpy(_lpszText, (LPCSTR)lpData);
 #endif
     _cchText = nTextSize;
@@ -128,7 +128,7 @@ void TextEditor::saveFile(LPCTSTR lpszFilename) {
     if (_lpszText == NULL) {
         // Определить размер текста в поле ввода
         _cchText = getTextLength();
-        _lpszText = new TCHAR[_cchText];
+        _lpszText = new TCHAR[_cchText + 1];
     }
 
     saveFile();

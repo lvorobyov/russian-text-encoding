@@ -118,10 +118,10 @@ public:
      * setText()
      * Установить текст в кодировке UTF16 / ASCII
      */
-    void setText(LPTSTR lpszText) {
+    void setText(LPCTSTR lpszText) {
         delete _lpszText;
         _cchText = _tcslen(lpszText);
-        _lpszText = new TCHAR[_cchText];
+        _lpszText = new TCHAR[_cchText + 1];
         _tcscpy(_lpszText, lpszText);
         SetWindowText(_hEdit, _lpszText);
     }
@@ -149,6 +149,9 @@ public:
         for (INT nLine = 0; nLine < nLineCount; nLine ++) {
             INT nLineIndex = SendMessage(_hEdit, EM_LINEINDEX, (WPARAM) nLine, 0L);
             nTextLength += SendMessage(_hEdit, EM_LINELENGTH, (WPARAM) nLineIndex, 0L);
+            if (nLine != nLineCount - 1) {
+                nTextLength += 2; // CR LF
+            }
         }
         return nTextLength;
     }
