@@ -6,7 +6,7 @@
  *      Email: lev.vorobjev@rambler.ru
  *
  * @Last modified by:   Lev Vorobjev
- * @Last modified time: 27.11.2017
+ * @Last modified time: 28.11.2017
  * @License: MIT
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
@@ -61,12 +61,12 @@ void TextEditor::openFile(LPCTSTR lpszFilename) {
 #ifdef _UNICODE
     nTextSize = MultiByteToWideChar(CP_UTF8, 0,
         (LPCSTR)lpData, -1, NULL, 0);
-    _lpszText = new TCHAR[nTextSize + 1];
+    _lpszText = new TCHAR[nTextSize];
     MultiByteToWideChar(CP_UTF8, 0,
         (LPCSTR)lpData, -1, _lpszText, nTextSize);
 #else
     nTextSize = nFileSize;
-    _lpszText = new TCHAR[nTextSize + 1];
+    _lpszText = new TCHAR[nTextSize];
     _tcscpy(_lpszText, (LPCSTR)lpData);
 #endif
     _cchText = nTextSize;
@@ -86,7 +86,13 @@ void TextEditor::saveFile() {
     UINT nTextSize;
 
     if (SendMessage(_hEdit, EM_GETMODIFY, 0, 0L)) {
-        _cchText = GetWindowText(_hEdit, _lpszText, _cchText);
+        nTextSize = getTextLength();
+        if (nTextSize > _cchText) {
+            _cchText = nTextSize;
+            delete _lpszText;
+            _lpszText = new TCHAR[_cchText + 1];
+        }
+        _cchText = GetWindowText(_hEdit, _lpszText, _cchText + 1);
     }
 
     nTextSize = _cchText;

@@ -6,7 +6,7 @@
  *      Email: lev.vorobjev@rambler.ru
  *
  * @Last modified by:   Lev Vorobjev
- * @Last modified time: 27.11.2017
+ * @Last modified time: 28.11.2017
  * @License: MIT
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
@@ -109,7 +109,7 @@ public:
      */
     LPTSTR getText() {
         if (SendMessage(_hEdit, EM_GETMODIFY, 0, 0L)) {
-            _cchText = GetWindowText(_hEdit, _lpszText, _cchText);
+            _cchText = GetWindowText(_hEdit, _lpszText, _cchText + 1);
         }
         return _lpszText;
     }
