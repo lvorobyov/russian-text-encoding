@@ -24,9 +24,20 @@ IDR_APPMENU MENUEX
         MENUITEM "----", 0, MFT_SEPARATOR, 0
         MENUITEM "&Закрыть", IDM_ITEM4, 0, 0
     }
+    POPUP "&Правка", 0, 0, 0
+    {
+        MENUITEM "&Отменить", IDM_ITEMUNDO, 0, 0
+        MENUITEM "&Повторить", IDM_ITEMREDO, 0, 0
+        MENUITEM "", 0, MFT_SEPARATOR, 0
+        MENUITEM "&Вырезать", IDM_ITEMCUT, 0, 0
+        MENUITEM "&Копировать", IDM_ITEMCOPY, 0, 0
+        MENUITEM "В&ставить", IDM_ITEMPASTE, 0, 0
+        MENUITEM "-", 0, MFT_SEPARATOR, 0
+        MENUITEM "В&ыделить все", IDM_ITEMALL, 0, 0
+    }
     POPUP "&Стеганография", 0, 0, 0
     {
-        MENUITEM "&Встроить в BMP...", IDM_ITEM5, 0, 0
-        MENUITEM "&Получить из BMP...", IDM_ITEM6, 0, 0
+        MENUITEM "&Встроить в BMP...", IDM_ITEMSTEGO, 0, 0
+        MENUITEM "&Получить из BMP...", IDM_ITEMUNSTEGO, 0, 0
     }
 }
