@@ -14,8 +14,6 @@
 #include <windows.h>
 #include <string.h>
 #include <tchar.h>
-#include <win32/win32_error.h>
-#include <stdexcept>
 
 /**
  * TextEditor
@@ -83,140 +81,27 @@ public:
      * emptyFile()
      * Создать новый пустой текстовый документ
      */
-    void emptyFile() {
-        SendMessage(_hEdit, WM_CLEAR, 0, 0L);
-        if (_lpszText != NULL) {
-            _tcscpy(_lpszText, TEXT("\0"));
-        }
-        _cchText = 0;
-        if (_hFile != NULL) {
-            CloseHandle(_hFile);
-            _hFile = NULL;
-        }
-    }
+    void emptyFile();
 
     /**
      * openFile()
      * Открыть текстовый файл
      * @param lpszFilename имя открываемого файла
      */
-    void openFile(LPCTSTR lpszFilename) {
-        if (_hFile != NULL) {
-            emptyFile();
-            delete _lpszText;
-            _lpszText = NULL;
-        }
-
-        HANDLE hFileMapping;
-        LPVOID lpData = NULL;
-        UINT nFileSize;
-        UINT nTextSize;
-
-        _hFile = CreateFile(lpszFilename,
-            GENERIC_READ | GENERIC_WRITE,
-            0, NULL, OPEN_EXISTING,
-            FILE_ATTRIBUTE_NORMAL, NULL);
-        if (_hFile == INVALID_HANDLE_VALUE) {
-            throw win32::win32_error("CreateFile");
-        }
-
-        hFileMapping = CreateFileMapping(_hFile, NULL,
-            PAGE_READONLY | SEC_COMMIT, 0, 0, NULL);
-        if (hFileMapping == NULL) {
-            throw win32::win32_error("CreateFileMapping");
-        }
-
-        nFileSize = GetFileSize(_hFile, NULL);
-        lpData = MapViewOfFile(hFileMapping, FILE_MAP_READ, 0, 0, 0);
-        if (lpData == NULL) {
-            throw win32::win32_error("MapViewOfFile");
-        }
-
-#ifdef _UNICODE
-        nTextSize = MultiByteToWideChar(CP_UTF8, 0,
-            (LPCSTR)lpData, -1, NULL, 0);
-        _lpszText = new TCHAR[nTextSize];
-        MultiByteToWideChar(CP_UTF8, 0,
-            (LPCSTR)lpData, -1, _lpszText, nTextSize);
-#else
-        nTextSize = nFileSize;
-        _lpszText = new TCHAR[nTextSize];
-        _tcscpy(_lpszText, (LPCSTR)lpData);
-#endif
-        _cchText = nTextSize;
-        SetWindowText(_hEdit, _lpszText);
-        UnmapViewOfFile(lpData);
-        CloseHandle(hFileMapping);
-    }
+    void openFile(LPCTSTR lpszFilename);
 
     /**
      * saveFile()
      * Сохраняет изменения в открытом текстовом файле
      */
-    void saveFile() {
-        if (_hFile == NULL) {
-            throw std::invalid_argument("_hFile is NULL");
-        }
-
-        LPVOID lpData = NULL;
-        DWORD dwBytesWritten;
-        UINT nFileSize;
-        UINT nTextSize;
-
-        if (SendMessage(_hEdit, EM_GETMODIFY, 0, 0L)) {
-            _cchText = GetWindowText(_hEdit, _lpszText, _cchText);
-        }
-
-        nTextSize = _cchText;
-#ifdef _UNICODE
-        nFileSize = WideCharToMultiByte(CP_UTF8, 0,
-            _lpszText, nTextSize, NULL, 0, NULL, NULL);
-        lpData = new BYTE[nFileSize];
-        WideCharToMultiByte(CP_UTF8, 0,
-            _lpszText, nTextSize, (LPSTR)lpData, nFileSize, NULL, NULL);
-#else
-        nFileSize = nTextSize;
-        lpData = new BYTE[nFileSize];
-        _tcscpy((LPTSTR)lpData, _lpszText);
-#endif
-
-        WriteFile(_hFile, lpData, nFileSize, &dwBytesWritten, NULL);
-        delete (LPBYTE)lpData;
-
-        SendMessage(_hEdit, EM_SETMODIFY, (WPARAM)(UINT)FALSE, 0L);
-    }
+    void saveFile();
 
     /**
      * saveFile(fileName)
      * Сохраняет документ в текстовом файле
      * @param lpszFilename имя текстового файла, в который сохраняется документ
      */
-    void saveFile(LPCTSTR lpszFilename) {
-        if (_hFile != NULL) {
-            CloseHandle(_hFile);
-            _hFile = NULL;
-        }
-
-        _hFile = CreateFile(lpszFilename,
-            GENERIC_READ | GENERIC_WRITE,
-            0, NULL, CREATE_ALWAYS,
-            FILE_ATTRIBUTE_NORMAL, NULL);
-        if (_hFile == INVALID_HANDLE_VALUE) {
-            throw win32::win32_error("CreateFile");
-        }
-
-        // Определить размер текста в поле ввода
-        INT nTextLength = 0;
-        INT nLineCount = SendMessage(_hEdit, EM_GETLINECOUNT, 0, 0L);
-        for (INT nLine = 0; nLine < nLineCount; nLine ++) {
-            INT nLineIndex = SendMessage(_hEdit, EM_LINEINDEX, (WPARAM) nLine, 0L);
-            nTextLength += SendMessage(_hEdit, EM_LINELENGTH, (WPARAM) nLineIndex, 0L);
-        }
-        _cchText = nTextLength;
-        _lpszText = new TCHAR[nTextLength];
-
-        saveFile();
-    }
+    void saveFile(LPCTSTR lpszFilename);
 
     /**
      * getText()
@@ -256,6 +141,9 @@ public:
      * @return количество символов в тексте
      */
     INT getTextLength() {
+        if (getModify() == FALSE) {
+            return _cchText;
+        }
         INT nTextLength = 0;
         INT nLineCount = SendMessage(_hEdit, EM_GETLINECOUNT, 0, 0L);
         for (INT nLine = 0; nLine < nLineCount; nLine ++) {
@@ -295,6 +183,14 @@ public:
      */
     void cut() {
         SendMessage(_hEdit, WM_CUT, 0, 0L);
+    }
+
+    /**
+     * clear()
+     * Удаление выделенного текста без копирования в буфер обмена
+     */
+    void clear() {
+        SendMessage(_hEdit, WM_CLEAR, 0, 0L);
     }
 
     /**
