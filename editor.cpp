@@ -69,7 +69,7 @@ void TextEditor::openFile(LPCTSTR lpszFilename) {
     _lpszText = new TCHAR[nTextSize];
     _tcscpy(_lpszText, (LPCSTR)lpData);
 #endif
-    _cchText = nTextSize;
+    _cchText = _tcslen(_lpszText);
     SetWindowText(_hEdit, _lpszText);
     UnmapViewOfFile(lpData);
     CloseHandle(hFileMapping);
