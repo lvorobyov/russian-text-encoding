@@ -6,13 +6,17 @@ HDRS = $(wildcard *.h)
 RES = $(wildcard *.rc)
 RESC = $(subst .rc,.res,$(RES))
 
+INCLUDES = -I../../../SP/KP/include
+DEFINES = -D_UNICODE -DUNICODE
+CFLAGS = -std=c++11 -g
+
 all: ${TARGET}
 
 ${TARGET}: ${OBJS} ${RESC}
 	g++ -mwindows -o $@ $^
 
 %.o: %.cpp ${HDRS}
-	g++ -D_UNICODE -DUNICODE -std=c++11 -g -c -o $@ $<
+	g++ ${DEFINES} ${CFLAGS} ${INCLUDES} -c -o $@ $<
 
 %.res: %.rc resource.h
 	windres $< $@ -O coff
