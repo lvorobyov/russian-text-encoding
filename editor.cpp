@@ -19,8 +19,10 @@
 
 void TextEditor::emptyFile() {
     SetWindowText(_hEdit, (LPTSTR) NULL);
-    delete _lpszText;
-    _lpszText = NULL;
+    if (_lpszText == NULL) {
+        _lpszText = new TCHAR[1];
+    }
+    _tcscpy(_lpszText, TEXT("\0"));
     _cchText = 0;
     if (_hFile != NULL) {
         CloseHandle(_hFile);
@@ -30,7 +32,12 @@ void TextEditor::emptyFile() {
 
 void TextEditor::openFile(LPCTSTR lpszFilename) {
     if (_hFile != NULL) {
-        emptyFile();
+        if (_hFile != NULL) {
+            CloseHandle(_hFile);
+            _hFile = NULL;
+        }
+        delete _lpszText;
+        _lpszText = NULL;
     }
 
     HANDLE hFileMapping;
@@ -86,13 +93,12 @@ void TextEditor::saveFile() {
     UINT nTextSize;
 
     if (SendMessage(_hEdit, EM_GETMODIFY, 0, 0L)) {
-        nTextSize = getTextLength();
-        if (nTextSize > _cchText) {
-            _cchText = nTextSize;
+        UINT cchTextNew = getTextLength();
+        if (cchTextNew > _cchText) {
             delete _lpszText;
-            _lpszText = new TCHAR[_cchText + 1];
+            _lpszText = new TCHAR[cchTextNew + 1];
         }
-        _cchText = GetWindowText(_hEdit, _lpszText, _cchText + 1);
+        _cchText = GetWindowText(_hEdit, _lpszText, cchTextNew + 1);
     }
 
     nTextSize = _cchText;
@@ -130,12 +136,6 @@ void TextEditor::saveFile(LPCTSTR lpszFilename) {
         _hFile = NULL;
     }
     _hFile = hNewFile;
-
-    if (_lpszText == NULL) {
-        // Определить размер текста в поле ввода
-        _cchText = getTextLength();
-        _lpszText = new TCHAR[_cchText + 1];
-    }
 
     saveFile();
 }

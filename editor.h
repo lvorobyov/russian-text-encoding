@@ -70,6 +70,8 @@ public:
             ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL,
             rcClient.left, rcClient.top, rcClient.right, rcClient.bottom,
             _hWndParent, hMenu, hInst, NULL);
+        _lpszText = new TCHAR[1];
+        _tcscpy(_lpszText, TEXT("\0"));
     }
 
     virtual ~TextEditor() {
@@ -109,7 +111,12 @@ public:
      */
     LPTSTR getText() {
         if (SendMessage(_hEdit, EM_GETMODIFY, 0, 0L)) {
-            _cchText = GetWindowText(_hEdit, _lpszText, _cchText + 1);
+            UINT cchTextNew = getTextLength();
+            if (cchTextNew > _cchText) {
+                delete _lpszText;
+                _lpszText = new TCHAR[cchTextNew + 1];
+            }
+            _cchText = GetWindowText(_hEdit, _lpszText, cchTextNew + 1);
         }
         return _lpszText;
     }
@@ -119,9 +126,12 @@ public:
      * Установить текст в кодировке UTF16 / ASCII
      */
     void setText(LPCTSTR lpszText) {
-        delete _lpszText;
-        _cchText = _tcslen(lpszText);
-        _lpszText = new TCHAR[_cchText + 1];
+        UINT cchTextNew = _tcslen(lpszText);
+        if (cchTextNew > _cchText) {
+            delete _lpszText;
+            _lpszText = new TCHAR[cchTextNew + 1];
+        }
+        _cchText = cchTextNew;
         _tcscpy(_lpszText, lpszText);
         SetWindowText(_hEdit, _lpszText);
     }
@@ -137,7 +147,7 @@ public:
 
     /**
      * getTextLength()
-     * Получить длину текста в символах
+     * Получить актуальную длину текста в поле ввода
      * @return количество символов в тексте
      */
     INT getTextLength() {
