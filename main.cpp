@@ -6,7 +6,7 @@
  *      Email: lev.vorobjev@rambler.ru
  *
  * @Last modified by:   Lev Vorobjev
- * @Last modified time: 27.11.2017
+ * @Last modified time: 28.11.2017
  * @License: MIT
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
@@ -25,6 +25,13 @@
     _stprintf(lpszBuffer, TEXT("%s error.\nStatus code: %d"), \
         lpszFunctionName, dwStatus); \
     MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONWARNING);
+
+#define DEBUG_INFO(editor) \
+    _stprintf(lpszBuffer, TEXT("TextLength: %d\nStatus: %s\nText: %s"), \
+        editor->getTextLength(), \
+        editor->getModify() ? TEXT("MODIFIED") : TEXT("NOT MODIFIED"), \
+        editor->getText()); \
+    MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONINFORMATION);
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 ATOM RegMyWindowClass(HINSTANCE, LPCTSTR);
@@ -194,6 +201,32 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                 editor->emptyFile();
                 EnableMenuItem(GetSubMenu(hMenu, 0), IDM_ITEM2, MF_BYCOMMAND | MF_GRAYED);
                 SetWindowText(hWnd, WND_TITLE);
+                break;
+            }
+
+            case IDM_ITEMUNDO:
+                editor->undo();
+                break;
+            case IDM_ITEMCUT:
+                editor->cut();
+                break;
+            case IDM_ITEMCOPY:
+                editor->copy();
+                break;
+            case IDM_ITEMPASTE:
+                editor->paste();
+                break;
+            case IDM_ITEMALL:
+                editor->selectAll();
+                break;
+
+            case IDM_ITEMSTEGO:
+            {
+                break;
+            }
+
+            case IDM_ITEMUNSTEGO:
+            {
                 break;
             }
         }
