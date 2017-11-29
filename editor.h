@@ -6,7 +6,7 @@
  *      Email: lev.vorobjev@rambler.ru
  *
  * @Last modified by:   Lev Vorobjev
- * @Last modified time: 28.11.2017
+ * @Last modified time: 29.11.2017
  * @License: MIT
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
@@ -104,6 +104,24 @@ public:
      * @param lpszFilename имя текстового файла, в который сохраняется документ
      */
     void saveFile(LPCTSTR lpszFilename);
+
+    /**
+     * writeToBuffer()
+     * Записиывает текстовые данные в буфер
+     * @param lpBuffer указатель на блок памяти для записи данных
+     * @param nBufferSize размер блока памяти в байтах
+     * @return количество записванных байтов в буфер данных
+     */
+    int writeToBuffer(LPVOID lpBuffer, int nBufferSize);
+
+    /**
+     * readFromBuffer()
+     * Считывает текстовые данные из буфера
+     * @param lpBuffer указатель на блок памяти для чтения данных
+     * @param nBytesToRead количество байтов для чтения
+     * @return количество прочитанных байтов из буфера данных
+     */
+    int readFromBuffer(LPVOID lpBuffer, int nBytesToRead);
 
     /**
      * getText()

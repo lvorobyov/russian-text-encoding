@@ -6,7 +6,7 @@
  *      Email: lev.vorobjev@rambler.ru
  *
  * @Last modified by:   Lev Vorobjev
- * @Last modified time: 28.11.2017
+ * @Last modified time: 29.11.2017
  * @License: MIT
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
@@ -138,4 +138,58 @@ void TextEditor::saveFile(LPCTSTR lpszFilename) {
     _hFile = hNewFile;
 
     saveFile();
+}
+
+int TextEditor::writeToBuffer(LPVOID lpBuffer, int nBufferSize) {
+    int nFileSize;
+    int nTextSize;
+
+    if (SendMessage(_hEdit, EM_GETMODIFY, 0, 0L)) {
+        UINT cchTextNew = getTextLength();
+        if (cchTextNew > _cchText) {
+            delete _lpszText;
+            _lpszText = new TCHAR[cchTextNew + 1];
+        }
+        _cchText = GetWindowText(_hEdit, _lpszText, cchTextNew + 1);
+    }
+
+    nTextSize = _cchText;
+#ifdef _UNICODE
+    nFileSize = WideCharToMultiByte(CP_UTF8, 0,
+        _lpszText, nTextSize, NULL, 0, NULL, NULL);
+    if (nFileSize > nBufferSize)
+        nFileSize = nBufferSize;
+    WideCharToMultiByte(CP_UTF8, 0,
+        _lpszText, nTextSize, (LPSTR)lpBuffer, nFileSize, NULL, NULL);
+#else
+    nFileSize = nTextSize;
+    if (nFileSize > nBufferSize)
+        nFileSize = nBufferSize;
+    _tcsncpy((LPTSTR)lpBuffer, _lpszText, nFileSize);
+#endif
+
+    return nFileSize;
+}
+
+int TextEditor::readFromBuffer(LPVOID lpBuffer, int nBytesToRead) {
+    int nFileSize = nBytesToRead;
+    int nTextSize;
+
+#ifdef _UNICODE
+    nTextSize = MultiByteToWideChar(CP_UTF8, 0,
+        (LPCSTR)lpBuffer, -1, NULL, 0);
+    delete _lpszText;
+    _lpszText = new TCHAR[nTextSize];
+    MultiByteToWideChar(CP_UTF8, 0,
+        (LPCSTR)lpBuffer, -1, _lpszText, nTextSize);
+#else
+    nTextSize = nFileSize;
+    delete _lpszText;
+    _lpszText = new TCHAR[nTextSize];
+    _tcscpy(_lpszText, (LPCSTR)lpBuffer);
+#endif
+    _cchText = _tcslen(_lpszText);
+    SetWindowText(_hEdit, _lpszText);
+
+    return nFileSize;
 }
