@@ -17,6 +17,7 @@
 #include "stego.h"
 #include "encfile.h"
 #include "resource.h"
+#include <win32/win32_error.h>
 
 #define IDC_EDITTEXT  40050
 
@@ -26,7 +27,7 @@
 
 #define HANDLE_ERROR(lpszFunctionName, dwStatus) \
     _stprintf(lpszBuffer, TEXT("%s error.\nStatus code: %d"), \
-        TEXT(lpszFunctionName), dwStatus); \
+        lpszFunctionName, dwStatus); \
     MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONWARNING);
 
 #define DEBUG_INFO(editor) \
@@ -236,42 +237,48 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                 ENCFILE_HEADER efh = {0};
 
                 if (! CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, 0)) {
-                    HANDLE_ERROR("CryptAquireContext", GetLastError());
+                    HANDLE_ERROR(TEXT("CryptAquireContext"), GetLastError());
                     break;
                 }
 
                 if (! CryptCreateHash(hProv, CALG_SHA_256, NULL, 0, &hUserHash)) {
                     CryptReleaseContext(hProv, 0);
-                    HANDLE_ERROR("CryptCreateHash", GetLastError());
+                    HANDLE_ERROR(TEXT("CryptCreateHash"), GetLastError());
                     break;
                 }
 
                 if (! CryptCreateHash(hProv, CALG_MD5, NULL, 0, &hMsgHash)) {
                     CryptReleaseContext(hProv, 0);
-                    HANDLE_ERROR("CryptCreateHash", GetLastError());
+                    HANDLE_ERROR(TEXT("CryptCreateHash"), GetLastError())
                     break;
                 }
 
                 // Встроить данные в контейнер
                 ofn.lpstrTitle = TEXT("Открыть файл контейнера");
                 if (GetOpenFileName(&ofn)) {
-                    stego.open(lpszFilename);
-                    nDataSize = editor->writeToBuffer(NULL, 0);
-                    nSignSize = 0;
-                    efh.dwMagic = ENCFILE_MAGIC;
-                    efh.wDataOffset = sizeof(ENCFILE_HEADER);
-                    efh.wSignLen = (WORD)nSignSize;
-                    efh.dwSizeHigh = 0;
-                    efh.dwSizeLow = nDataSize;
-                    lpData = new BYTE[sizeof(ENCFILE_HEADER) + nDataSize + nSignSize];
-                    CopyMemory(lpData, &efh, sizeof(ENCFILE_HEADER));
-                    editor->writeToBuffer((LPBYTE)lpData + sizeof(ENCFILE_HEADER), nDataSize);
+                    try {
+                        stego.open(lpszFilename);
+                        nDataSize = editor->writeToBuffer(NULL, 0);
+                        nSignSize = 0;
+                        efh.dwMagic = ENCFILE_MAGIC;
+                        efh.wDataOffset = sizeof(ENCFILE_HEADER);
+                        efh.wSignLen = (WORD)nSignSize;
+                        efh.dwSizeHigh = 0;
+                        efh.dwSizeLow = nDataSize;
+                        lpData = new BYTE[sizeof(ENCFILE_HEADER) + nDataSize + nSignSize];
+                        CopyMemory(lpData, &efh, sizeof(ENCFILE_HEADER));
+                        editor->writeToBuffer((LPBYTE)lpData + sizeof(ENCFILE_HEADER), nDataSize);
 
-                    stego.stego((LPBYTE)lpData, sizeof(ENCFILE_HEADER) + nDataSize + nSignSize);
-                    stego.save();
+                        stego.stego((LPBYTE)lpData, sizeof(ENCFILE_HEADER) + nDataSize + nSignSize);
+                        stego.save();
 
-                    delete (LPBYTE)lpData;
-                    stego.close();
+                        delete (LPBYTE)lpData;
+                        stego.close();
+                    } catch (win32::win32_error& ex) {
+                        HANDLE_ERROR(ex.what(), ex.code())
+                    } catch (std::exception& ex) {
+                        HANDLE_ERROR(ex.what(), 0)
+                    }
                 } else {
                     dwStatus = CommDlgExtendedError();
                     if (dwStatus != 0) {
@@ -300,39 +307,49 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                 ENCFILE_HEADER efh = {0};
 
                 if (! CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, 0)) {
-                    HANDLE_ERROR("CryptAquireContext", GetLastError());
+                    HANDLE_ERROR(TEXT("CryptAquireContext"), GetLastError());
                     break;
                 }
 
                 if (! CryptCreateHash(hProv, CALG_SHA_256, NULL, 0, &hUserHash)) {
                     CryptReleaseContext(hProv, 0);
-                    HANDLE_ERROR("CryptCreateHash", GetLastError());
+                    HANDLE_ERROR(TEXT("CryptCreateHash"), GetLastError());
                     break;
                 }
 
                 if (! CryptCreateHash(hProv, CALG_MD5, NULL, 0, &hMsgHash)) {
                     CryptReleaseContext(hProv, 0);
-                    HANDLE_ERROR("CryptCreateHash", GetLastError());
+                    HANDLE_ERROR(TEXT("CryptCreateHash"), GetLastError());
                     break;
                 }
 
                 // Изъять данные из контейнера
                 ofn.lpstrTitle = TEXT("Открыть файл контейнера");
                 if (GetOpenFileName(&ofn)) {
-                    stego.open(lpszFilename);
-                    stego.unstego((LPBYTE)&efh, sizeof(ENCFILE_HEADER));
-                    if (efh.dwMagic != ENCFILE_MAGIC) {
-                        MessageBox(hWnd, TEXT("Контейнер не содержит стеганографических данных"),
-                            MSG_TITLE, MB_OK | MB_ICONINFORMATION);
-                    }
-                    nSignSize = efh.wSignLen;
-                    nDataSize = efh.dwSizeLow;
-                    lpData = new BYTE[efh.wDataOffset + nDataSize + nSignSize];
-                    stego.unstego((LPBYTE)lpData, efh.wDataOffset + nDataSize + nSignSize);
-                    editor->readFromBuffer((LPBYTE)lpData + efh.wDataOffset, nDataSize);
+                    try {
+                        stego.open(lpszFilename);
+                        stego.unstego((LPBYTE)&efh, sizeof(ENCFILE_HEADER));
+                        if (efh.dwMagic != ENCFILE_MAGIC) {
+                            MessageBox(hWnd, TEXT("Контейнер не содержит стеганографических данных"),
+                                MSG_TITLE, MB_OK | MB_ICONINFORMATION);
+                            CryptDestroyHash(hMsgHash);
+                            CryptDestroyHash(hUserHash);
+                            CryptReleaseContext(hProv, 0);
+                            break;
+                        }
+                        nSignSize = efh.wSignLen;
+                        nDataSize = efh.dwSizeLow;
+                        lpData = new BYTE[efh.wDataOffset + nDataSize + nSignSize];
+                        stego.unstego((LPBYTE)lpData, efh.wDataOffset + nDataSize + nSignSize);
+                        editor->readFromBuffer((LPBYTE)lpData + efh.wDataOffset, nDataSize);
 
-                    delete (LPBYTE)lpData;
-                    stego.close();
+                        delete (LPBYTE)lpData;
+                        stego.close();
+                    } catch (win32::win32_error& ex) {
+                        HANDLE_ERROR(ex.what(), ex.code())
+                    } catch (std::exception& ex) {
+                        HANDLE_ERROR(ex.what(), 0)
+                    }
                 } else {
                     dwStatus = CommDlgExtendedError();
                     if (dwStatus != 0) {
