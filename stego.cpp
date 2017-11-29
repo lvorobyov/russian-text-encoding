@@ -72,6 +72,7 @@ void StegoContainer::save() {
         throw win32::win32_error("GlobalLock");
     }
 
+    SetFilePointer(_hFile, 0, NULL, FILE_BEGIN);
     if (! WriteFile(_hFile, lpStego, nFileSize, &dwBytesWritten, NULL)) {
         throw win32::win32_error("ReadFile");
     }
@@ -194,8 +195,8 @@ int StegoContainer::unstego(LPBYTE lpbData, int nDataMaxLen) {
         for (int j=0; j < dwBytes / 4 && nResult < nDataMaxLen; j++) {
             bData = 0;
             for (int k=0; k<4; k++) {
-                bData &= lpbPixel[4*j + k] & 0x03;
                 bData <<= 2;
+                bData |= (lpbPixel[4*j + k] & 0x03);
             }
             *lpbData = bData;
             lpbData++;

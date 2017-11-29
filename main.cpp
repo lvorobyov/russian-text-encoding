@@ -233,7 +233,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                 StegoContainer stego;
                 LPVOID lpData = NULL;
                 int nDataSize;
-                int nSignSize;
+                int nSignSize = 0;
                 ENCFILE_HEADER efh = {0};
 
                 if (! CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, 0)) {
@@ -332,6 +332,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                         if (efh.dwMagic != ENCFILE_MAGIC) {
                             MessageBox(hWnd, TEXT("Контейнер не содержит стеганографических данных"),
                                 MSG_TITLE, MB_OK | MB_ICONINFORMATION);
+                            HANDLE_ERROR(TEXT("efh.dwMagic"), efh.dwMagic)
                             CryptDestroyHash(hMsgHash);
                             CryptDestroyHash(hUserHash);
                             CryptReleaseContext(hProv, 0);

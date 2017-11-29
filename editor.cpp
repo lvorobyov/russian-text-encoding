@@ -114,6 +114,7 @@ void TextEditor::saveFile() {
     _tcscpy((LPTSTR)lpData, _lpszText);
 #endif
 
+    SetFilePointer(_hFile, 0, NULL, FILE_BEGIN);
     WriteFile(_hFile, lpData, nFileSize, &dwBytesWritten, NULL);
     delete (LPBYTE)lpData;
 
