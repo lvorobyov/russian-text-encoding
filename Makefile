@@ -6,7 +6,7 @@ HDRS = $(wildcard *.h)
 RES = $(wildcard *.rc)
 RESC = $(subst .rc,.res,$(RES))
 
-INCLUDES = -I../../../SP/KP/include
+INCLUDES = -I../../../SP/KP/include -I../../Lab4/src
 DEFINES = -D_UNICODE -DUNICODE
 CFLAGS = -std=c++11 -g
 
