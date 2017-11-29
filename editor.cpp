@@ -157,12 +157,18 @@ int TextEditor::writeToBuffer(LPVOID lpBuffer, int nBufferSize) {
 #ifdef _UNICODE
     nFileSize = WideCharToMultiByte(CP_UTF8, 0,
         _lpszText, nTextSize, NULL, 0, NULL, NULL);
+    if (lpBuffer == NULL) {
+        return nFileSize;
+    }
     if (nFileSize > nBufferSize)
         nFileSize = nBufferSize;
     WideCharToMultiByte(CP_UTF8, 0,
         _lpszText, nTextSize, (LPSTR)lpBuffer, nFileSize, NULL, NULL);
 #else
     nFileSize = nTextSize;
+    if (lpBuffer == NULL) {
+        return nFileSize;
+    }
     if (nFileSize > nBufferSize)
         nFileSize = nBufferSize;
     _tcsncpy((LPTSTR)lpBuffer, _lpszText, nFileSize);
