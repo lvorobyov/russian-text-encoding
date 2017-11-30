@@ -41,3 +41,20 @@ IDR_APPMENU MENUEX
         MENUITEM "&Получить из BMP...", IDM_ITEMUNSTEGO, 0, 0
     }
 }
+
+
+
+//
+// Dialog resources
+//
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+IDD_PASSWORDDLG DIALOG 0, 0, 232, 55
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_VISIBLE | WS_POPUP | WS_SYSMENU
+CAPTION "Требуется ввод пароля"
+FONT 8, "Ms Shell Dlg"
+{
+    EDITTEXT        IDC_EDITPASS, 6, 18, 220, 14, ES_AUTOHSCROLL | ES_PASSWORD, WS_EX_LEFT
+    LTEXT           "Пожалуйста, введите пароль для встраивания в контейнер:", IDC_LBLQUERY, 6, 6, 220, 9, SS_LEFT, WS_EX_LEFT
+    PUSHBUTTON      "Отмена", IDCANCEL, 176, 35, 50, 14, 0, WS_EX_LEFT
+    DEFPUSHBUTTON   "OK", IDOK, 120, 35, 50, 14, 0, WS_EX_LEFT
+}

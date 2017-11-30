@@ -6,7 +6,7 @@
  *      Email: lev.vorobjev@rambler.ru
  *
  * @Last modified by:   Lev Vorobjev
- * @Last modified time: 30.11.2017
+ * @Last modified time: 01.12.2017
  * @License: MIT
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
@@ -17,6 +17,7 @@
 #include "stego.h"
 #include "crypt_tools.h"
 #include "resource.h"
+#include "dialog.h"
 #include <win32/win32_error.h>
 
 #define IDC_EDITTEXT  40050

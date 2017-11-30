@@ -3,8 +3,11 @@
 #endif
 
 #define IDR_APPMENU                             100
+#define IDD_PASSWORDDLG                         102
+#define IDC_LBLQUERY                            40000
 #define IDM_ITEM1                               40000
 #define IDM_ITEM2                               40001
+#define IDC_EDITPASS                            40002
 #define IDM_ITEM3                               40002
 #define IDM_ITEM4                               40003
 #define IDM_ITEMSTEGO                           40004
