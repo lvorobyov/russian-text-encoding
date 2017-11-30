@@ -30,6 +30,7 @@
         lpszFunctionName, dwStatus); \
     MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONWARNING);
 
+#ifdef _DEBUG
 #define DEBUG_INFO(editor) \
     _stprintf(lpszBuffer, TEXT("TextLength: %d\nStatus: %s\nText: %s"), \
         editor->getTextLength(), \
@@ -42,6 +43,10 @@
         _stprintf(lpszBuffer + 3 * i, (i % 16 == 15) ? TEXT("%02X\n") : TEXT("%02X "), ((LPBYTE)lpData)[i]); \
     } \
     MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONINFORMATION);
+#else
+#define DEBUG_INFO(editor)
+#define DEBUG_DUMP(lpData, dwLenght)
+#endif
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 ATOM RegMyWindowClass(HINSTANCE, LPCTSTR);
