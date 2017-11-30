@@ -186,9 +186,10 @@ int TextEditor::readFromBuffer(LPVOID lpBuffer, int nBytesToRead) {
     nTextSize = MultiByteToWideChar(CP_UTF8, 0,
         (LPCSTR)lpBuffer, nFileSize, NULL, 0);
     delete _lpszText;
-    _lpszText = new TCHAR[nTextSize];
+    _lpszText = new TCHAR[nTextSize + 1];
     MultiByteToWideChar(CP_UTF8, 0,
         (LPCSTR)lpBuffer, nFileSize, _lpszText, nTextSize);
+    _lpszText[nTextSize] = 0;
 #else
     nTextSize = nFileSize;
     delete _lpszText;
