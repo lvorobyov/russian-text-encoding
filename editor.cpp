@@ -6,7 +6,7 @@
  *      Email: lev.vorobjev@rambler.ru
  *
  * @Last modified by:   Lev Vorobjev
- * @Last modified time: 29.11.2017
+ * @Last modified time: 30.11.2017
  * @License: MIT
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
@@ -184,16 +184,16 @@ int TextEditor::readFromBuffer(LPVOID lpBuffer, int nBytesToRead) {
 
 #ifdef _UNICODE
     nTextSize = MultiByteToWideChar(CP_UTF8, 0,
-        (LPCSTR)lpBuffer, -1, NULL, 0);
+        (LPCSTR)lpBuffer, nFileSize, NULL, 0);
     delete _lpszText;
     _lpszText = new TCHAR[nTextSize];
     MultiByteToWideChar(CP_UTF8, 0,
-        (LPCSTR)lpBuffer, -1, _lpszText, nTextSize);
+        (LPCSTR)lpBuffer, nFileSize, _lpszText, nTextSize);
 #else
     nTextSize = nFileSize;
     delete _lpszText;
     _lpszText = new TCHAR[nTextSize];
-    _tcscpy(_lpszText, (LPCSTR)lpBuffer);
+    _tcsncpy(_lpszText, (LPCSTR)lpBuffer, nTextSize);
 #endif
     _cchText = _tcslen(_lpszText);
     SetWindowText(_hEdit, _lpszText);

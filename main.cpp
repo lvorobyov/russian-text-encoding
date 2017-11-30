@@ -6,7 +6,7 @@
  *      Email: lev.vorobjev@rambler.ru
  *
  * @Last modified by:   Lev Vorobjev
- * @Last modified time: 29.11.2017
+ * @Last modified time: 30.11.2017
  * @License: MIT
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
@@ -15,7 +15,7 @@
 #include <wincrypt.h>
 #include "editor.h"
 #include "stego.h"
-#include "encfile.h"
+#include "crypt_tools.h"
 #include "resource.h"
 #include <win32/win32_error.h>
 
@@ -35,6 +35,12 @@
         editor->getTextLength(), \
         editor->getModify() ? TEXT("MODIFIED") : TEXT("NOT MODIFIED"), \
         editor->getText()); \
+    MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONINFORMATION);
+
+#define DEBUG_DUMP(lpData, dwLenght) \
+    for (int i = 0; i < dwLenght; i++) { \
+        _stprintf(lpszBuffer + 3 * i, (i % 16 == 15) ? TEXT("%02X\n") : TEXT("%02X "), ((LPBYTE)lpData)[i]); \
+    } \
     MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONINFORMATION);
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -227,29 +233,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
             case IDM_ITEMSTEGO:
             {
                 HCRYPTPROV hProv;
-                HCRYPTHASH hUserHash;
                 HCRYPTKEY hAesKey;
-                HCRYPTHASH hMsgHash;
                 StegoContainer stego;
                 LPVOID lpData = NULL;
                 int nDataSize;
-                int nSignSize = 0;
+                int nHashSize;
                 ENCFILE_HEADER efh = {0};
+                ENCFILE_HEADER* lpEfh;
+                LPBYTE lpbData;
+                LPBYTE lpbHash;
 
-                if (! CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, 0)) {
+                if (! CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
                     HANDLE_ERROR(TEXT("CryptAquireContext"), GetLastError());
-                    break;
-                }
-
-                if (! CryptCreateHash(hProv, CALG_SHA_256, NULL, 0, &hUserHash)) {
-                    CryptReleaseContext(hProv, 0);
-                    HANDLE_ERROR(TEXT("CryptCreateHash"), GetLastError());
-                    break;
-                }
-
-                if (! CryptCreateHash(hProv, CALG_MD5, NULL, 0, &hMsgHash)) {
-                    CryptReleaseContext(hProv, 0);
-                    HANDLE_ERROR(TEXT("CryptCreateHash"), GetLastError())
                     break;
                 }
 
@@ -259,18 +254,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                     try {
                         stego.open(lpszFilename);
                         nDataSize = editor->writeToBuffer(NULL, 0);
-                        nSignSize = 0;
+                        nHashSize = ComputeMD5Hash(hProv, NULL, 0, NULL);
                         efh.dwMagic = ENCFILE_MAGIC;
                         efh.wDataOffset = sizeof(ENCFILE_HEADER);
-                        efh.wSignLen = (WORD)nSignSize;
+                        efh.wSignLen = (WORD)nHashSize;
                         efh.dwSizeHigh = 0;
                         efh.dwSizeLow = nDataSize;
-                        lpData = new BYTE[sizeof(ENCFILE_HEADER) + nDataSize + nSignSize];
-                        CopyMemory(lpData, &efh, sizeof(ENCFILE_HEADER));
-                        editor->writeToBuffer((LPBYTE)lpData + sizeof(ENCFILE_HEADER), nDataSize);
+                        lpData = new BYTE[sizeof(ENCFILE_HEADER) + nDataSize + nHashSize];
+                        lpEfh = (ENCFILE_HEADER*) lpData;
+                        lpbData = (LPBYTE)lpEfh + sizeof(ENCFILE_HEADER);
+                        lpbHash = lpbData + nDataSize;
+                        CopyMemory(lpEfh, &efh, sizeof(ENCFILE_HEADER));
+                        editor->writeToBuffer(lpbData, nDataSize);
+                        ComputeMD5Hash(hProv, lpbData, nDataSize, lpbHash);
 
-                        stego.stego((LPBYTE)lpData, sizeof(ENCFILE_HEADER) + nDataSize + nSignSize);
+                        DEBUG_DUMP(lpData, sizeof(ENCFILE_HEADER) + nDataSize + nHashSize)
+
+                        stego.stego((LPBYTE)lpData, sizeof(ENCFILE_HEADER) + nDataSize + nHashSize);
                         stego.save();
+                        MessageBox(hWnd, TEXT("Данные внедрены в BMP"),
+                            MSG_TITLE, MB_OK | MB_ICONINFORMATION);
 
                         delete (LPBYTE)lpData;
                         stego.close();
@@ -287,8 +290,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                     }
                 }
 
-                CryptDestroyHash(hMsgHash);
-                CryptDestroyHash(hUserHash);
                 CryptReleaseContext(hProv, 0);
 
                 break;
@@ -297,29 +298,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
             case IDM_ITEMUNSTEGO:
             {
                 HCRYPTPROV hProv;
-                HCRYPTHASH hUserHash;
                 HCRYPTKEY hAesKey;
-                HCRYPTHASH hMsgHash;
                 StegoContainer stego;
                 LPVOID lpData = NULL;
                 int nDataSize;
-                int nSignSize;
+                int nHashSize;
                 ENCFILE_HEADER efh = {0};
+                ENCFILE_HEADER* lpEfh;
+                LPBYTE lpbData;
+                LPBYTE lpbHash;
+                LPBYTE lpbCheckHash;
 
-                if (! CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, 0)) {
+                if (! CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
                     HANDLE_ERROR(TEXT("CryptAquireContext"), GetLastError());
-                    break;
-                }
-
-                if (! CryptCreateHash(hProv, CALG_SHA_256, NULL, 0, &hUserHash)) {
-                    CryptReleaseContext(hProv, 0);
-                    HANDLE_ERROR(TEXT("CryptCreateHash"), GetLastError());
-                    break;
-                }
-
-                if (! CryptCreateHash(hProv, CALG_MD5, NULL, 0, &hMsgHash)) {
-                    CryptReleaseContext(hProv, 0);
-                    HANDLE_ERROR(TEXT("CryptCreateHash"), GetLastError());
                     break;
                 }
 
@@ -332,18 +323,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                         if (efh.dwMagic != ENCFILE_MAGIC) {
                             MessageBox(hWnd, TEXT("Контейнер не содержит стеганографических данных"),
                                 MSG_TITLE, MB_OK | MB_ICONINFORMATION);
-                            HANDLE_ERROR(TEXT("efh.dwMagic"), efh.dwMagic)
-                            CryptDestroyHash(hMsgHash);
-                            CryptDestroyHash(hUserHash);
                             CryptReleaseContext(hProv, 0);
                             break;
                         }
-                        nSignSize = efh.wSignLen;
+                        nHashSize = efh.wSignLen;
                         nDataSize = efh.dwSizeLow;
-                        lpData = new BYTE[efh.wDataOffset + nDataSize + nSignSize];
-                        stego.unstego((LPBYTE)lpData, efh.wDataOffset + nDataSize + nSignSize);
-                        editor->readFromBuffer((LPBYTE)lpData + efh.wDataOffset, nDataSize);
+                        lpData = new BYTE[efh.wDataOffset + nDataSize + nHashSize];
+                        lpbCheckHash = new BYTE[nHashSize];
+                        lpEfh = (ENCFILE_HEADER*) lpData;
+                        lpbData = (LPBYTE)lpEfh + efh.wDataOffset;
+                        lpbHash = lpbData + nDataSize;
+                        stego.unstego((LPBYTE)lpData, efh.wDataOffset + nDataSize + nHashSize);
+                        ComputeMD5Hash(hProv, lpbData, nDataSize, lpbCheckHash);
 
+                        DEBUG_DUMP(lpData, sizeof(ENCFILE_HEADER) + nDataSize + nHashSize)
+                        DEBUG_DUMP(lpbCheckHash, nHashSize)
+
+                        if (memcmp(lpbHash, lpbCheckHash, nHashSize) != 0) {
+                            MessageBox(hWnd, TEXT("Стеганографические данные были искажены"),
+                                MSG_TITLE, MB_OK | MB_ICONINFORMATION);
+                        } else {
+                            editor->readFromBuffer(lpbData, nDataSize);
+                        }
+
+                        delete lpbCheckHash;
                         delete (LPBYTE)lpData;
                         stego.close();
                     } catch (win32::win32_error& ex) {
@@ -359,8 +362,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                     }
                 }
 
-                CryptDestroyHash(hMsgHash);
-                CryptDestroyHash(hUserHash);
                 CryptReleaseContext(hProv, 0);
 
                 break;
