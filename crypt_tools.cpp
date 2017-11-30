@@ -65,5 +65,9 @@ void PasswordToAesKey(HCRYPTPROV hProv, LPTSTR lpszPassword, DWORD dwPasswordLen
         throw win32::win32_error("CryptDeriveKey");
     }
 
+    // Установить требуемый режим шифрования: CBC
+    const DWORD dwMode = CRYPT_MODE_CBC;
+    CryptSetKeyParam(*phKey, KP_MODE, (LPBYTE)&dwMode, 0);
+
     CryptDestroyHash(hHash);
 }
