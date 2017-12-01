@@ -27,8 +27,10 @@
 #define BUFFER_SIZE 512
 
 #define HANDLE_ERROR(lpszFunctionName, dwStatus) \
+    MultiByteToWideChar(CP_ACP, 0, \
+        lpszFunctionName, -1, lpszBuffer, BUFFER_SIZE); \
     _stprintf(lpszBuffer, TEXT("%s error.\nStatus code: %d"), \
-        lpszFunctionName, dwStatus); \
+        lpszBuffer, dwStatus); \
     MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONWARNING);
 
 #ifdef _DEBUG
@@ -262,7 +264,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                 DWORD dwEncryptLen;
 
                 if (! CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
-                    HANDLE_ERROR(TEXT("CryptAquireContext"), GetLastError());
+                    HANDLE_ERROR("CryptAquireContext", GetLastError());
                     break;
                 }
 
@@ -365,7 +367,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                 DWORD dwEncryptLen;
 
                 if (! CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
-                    HANDLE_ERROR(TEXT("CryptAquireContext"), GetLastError());
+                    HANDLE_ERROR("CryptAquireContext", GetLastError());
                     break;
                 }
 
@@ -403,14 +405,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                         nDataSize = efh.dwSizeLow;
                         dwEncryptLen = efh.wDataOffset + nDataSize + nHashSize;
                         lpData = new BYTE[dwEncryptLen + 16];
+                        ZeroMemory(lpData, dwEncryptLen + 16);
                         lpbCheckHash = new BYTE[nHashSize];
                         lpEfh = (ENCFILE_HEADER*) lpData;
                         lpbData = (LPBYTE)lpEfh + efh.wDataOffset;
                         lpbHash = lpbData + nDataSize;
+                        dwEncryptLen = ((dwEncryptLen + 15) / 16) * 16;
                         stego.unstego((LPBYTE)lpData, dwEncryptLen);
 
                         // Расшифровать данные
-                        if (! CryptDecrypt(hAesKey, NULL, FALSE, 0, (LPBYTE)lpData, &dwEncryptLen)) {
+                        if (! CryptDecrypt(hAesKey, NULL, TRUE, 0, (LPBYTE)lpData, &dwEncryptLen)) {
                             throw win32::win32_error("CryptDecrypt");
                         }
 
