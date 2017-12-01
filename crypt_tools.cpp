@@ -4,7 +4,7 @@
  * @Email:  lev.vorobjev@rambler.ru
  * @Filename: crypt_tools.cpp
  * @Last modified by:   Lev Vorobjev
- * @Last modified time: 30.11.2017
+ * @Last modified time: 01.12.2017
  * @License: MIT
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
@@ -49,8 +49,9 @@ int ComputeMD5Hash(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen, LPBYTE
     return cbHashSize;
 }
 
-void PasswordToAesKey(HCRYPTPROV hProv, LPTSTR lpszPassword, DWORD dwPasswordLen, HCRYPTKEY *phKey) {
+HCRYPTKEY PasswordToAesKey(HCRYPTPROV hProv, LPTSTR lpszPassword, DWORD dwPasswordLen) {
     HCRYPTHASH hHash;
+    HCRYPTKEY hAesKey = NULL;
 
     if (! CryptCreateHash(hProv, CALG_SHA_256, NULL, 0, &hHash)) {
         throw win32::win32_error("CryptCreateHash");
@@ -61,13 +62,14 @@ void PasswordToAesKey(HCRYPTPROV hProv, LPTSTR lpszPassword, DWORD dwPasswordLen
         throw win32::win32_error("CryptHashData");
     }
 
-    if (! CryptDeriveKey(hProv, CALG_AES_256, hHash, 0, phKey)) {
+    if (! CryptDeriveKey(hProv, CALG_AES_256, hHash, 0, &hAesKey)) {
         throw win32::win32_error("CryptDeriveKey");
     }
 
     // Установить требуемый режим шифрования: CBC
     const DWORD dwMode = CRYPT_MODE_CBC;
-    CryptSetKeyParam(*phKey, KP_MODE, (LPBYTE)&dwMode, 0);
+    CryptSetKeyParam(hAesKey, KP_MODE, (LPBYTE)&dwMode, 0);
 
     CryptDestroyHash(hHash);
+    return hAesKey;
 }

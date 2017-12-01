@@ -103,6 +103,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
     PAINTSTRUCT ps;
 
     static OPENFILENAME ofn = {0};
+    static PASSWORD_DLG pdlg = {0};
     static LPTSTR lpszFilename;
     static LPTSTR lpszBuffer;
     static HMENU hMenu;
@@ -120,12 +121,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
         ofn.hwndOwner = hWnd;
         ofn.lpstrFile = lpszFilename;
         ofn.nMaxFile = BUFFER_SIZE;
-        ofn.lpstrFilter = TEXT("Все файлы\0*.*\0Файлы ключей\0*.pek\0");
+        ofn.lpstrFilter = TEXT("Все файлы\0*.*\0Текстовые файлы\0*.txt\0Точечные рисунки\0*.bmp\0");
         ofn.nFilterIndex = 1;
         ofn.lpstrFileTitle = NULL;
         ofn.nMaxFileTitle = 0;
         ofn.lpstrInitialDir = NULL;
         ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
+        // Заполнение стуктуры диалога ввода пароля
+        pdlg.lStructSize = sizeof(PASSWORD_DLG);
+        pdlg.hInstance = hInst;
+        pdlg.hwndOwner = hWnd;
+        pdlg.lpszPassword = lpszBuffer;
+        pdlg.dwMaxPassword = BUFFER_SIZE;
         // Получение дескрипторов разделов меню
         hMenu = GetMenu(hWnd);
         editor = new TextEditor(hWnd, (HMENU)IDC_EDITTEXT, hInst);
@@ -156,6 +163,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 
                 // Открыть файл
                 ofn.lpstrTitle = NULL;
+                ofn.nFilterIndex = 2;
                 if (GetOpenFileName(&ofn)) {
 
                     editor->openFile(lpszFilename);
@@ -188,6 +196,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
             {
                 // Сохранить файл как...
                 ofn.lpstrTitle = NULL;
+                ofn.nFilterIndex = 2;
                 if (GetSaveFileName(&ofn)) {
                     editor->saveFile(lpszFilename);
 
@@ -248,6 +257,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                 ENCFILE_HEADER* lpEfh;
                 LPBYTE lpbData;
                 LPBYTE lpbHash;
+                LPTSTR lpszPassword = NULL;
+                INT nPasswordLen;
+                DWORD dwEncryptLen;
 
                 if (! CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
                     HANDLE_ERROR(TEXT("CryptAquireContext"), GetLastError());
@@ -256,7 +268,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 
                 // Встроить данные в контейнер
                 ofn.lpstrTitle = TEXT("Открыть файл контейнера");
+                ofn.nFilterIndex = 3;
                 if (GetOpenFileName(&ofn)) {
+                    pdlg.lpszTitle = NULL;
+                    pdlg.lpszPassword = lpszBuffer;
+                    pdlg.lpszQuery = TEXT("Пожалуйста, введите пароль для шифрования данных:");
+                    if (! GetUserPassword(&pdlg)) {
+                        CryptReleaseContext(hProv, 0);
+                        break;
+                    }
+
+                    nPasswordLen = _tcslen(lpszBuffer);
+                    lpszPassword = new TCHAR[nPasswordLen + 1];
+                    pdlg.lpszTitle = TEXT("Повтор пароля");
+                    pdlg.lpszPassword = lpszPassword;
+                    pdlg.lpszQuery = TEXT("Повторите ввод пароля:");
+                    if (! GetUserPassword(&pdlg)) {
+                        CryptReleaseContext(hProv, 0);
+                        delete lpszPassword;
+                        break;
+                    }
+
+                    if (_tcscmp(lpszBuffer, lpszPassword) != 0) {
+                        MessageBox(hWnd, TEXT("Пароли не совпадают"),
+                            MSG_TITLE, MB_OK | MB_ICONWARNING);
+                        CryptReleaseContext(hProv, 0);
+                        delete lpszPassword;
+                        break;
+                    }
+
                     try {
                         stego.open(lpszFilename);
                         nDataSize = editor->writeToBuffer(NULL, 0);
@@ -266,7 +306,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                         efh.wSignLen = (WORD)nHashSize;
                         efh.dwSizeHigh = 0;
                         efh.dwSizeLow = nDataSize;
-                        lpData = new BYTE[sizeof(ENCFILE_HEADER) + nDataSize + nHashSize];
+                        dwEncryptLen = sizeof(ENCFILE_HEADER) + nDataSize + nHashSize;
+                        lpData = new BYTE[dwEncryptLen + 16];
+                        ZeroMemory(lpData, dwEncryptLen + 16);
                         lpEfh = (ENCFILE_HEADER*) lpData;
                         lpbData = (LPBYTE)lpEfh + sizeof(ENCFILE_HEADER);
                         lpbHash = lpbData + nDataSize;
@@ -274,20 +316,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                         editor->writeToBuffer(lpbData, nDataSize);
                         ComputeMD5Hash(hProv, lpbData, nDataSize, lpbHash);
 
-                        DEBUG_DUMP(lpData, sizeof(ENCFILE_HEADER) + nDataSize + nHashSize)
+                        DEBUG_DUMP(lpData, dwEncryptLen)
 
-                        stego.stego((LPBYTE)lpData, sizeof(ENCFILE_HEADER) + nDataSize + nHashSize);
+                        hAesKey = PasswordToAesKey(hProv, lpszPassword, nPasswordLen);
+                        if (! CryptEncrypt(hAesKey, NULL, TRUE, 0, (BYTE*)lpData, &dwEncryptLen, dwEncryptLen + 16)) {
+                            throw win32::win32_error("CryptEncrypt");
+                        }
+                        stego.stego((LPBYTE)lpData, dwEncryptLen);
                         stego.save();
+                        CryptDestroyKey(hAesKey);
                         MessageBox(hWnd, TEXT("Данные внедрены в BMP"),
                             MSG_TITLE, MB_OK | MB_ICONINFORMATION);
 
-                        delete (LPBYTE)lpData;
-                        stego.close();
                     } catch (win32::win32_error& ex) {
                         HANDLE_ERROR(ex.what(), ex.code())
                     } catch (std::exception& ex) {
                         HANDLE_ERROR(ex.what(), 0)
                     }
+                    delete lpszPassword;
+                    delete (LPBYTE)lpData;
+                    stego.close();
                 } else {
                     dwStatus = CommDlgExtendedError();
                     if (dwStatus != 0) {
@@ -314,6 +362,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                 LPBYTE lpbData;
                 LPBYTE lpbHash;
                 LPBYTE lpbCheckHash;
+                DWORD dwEncryptLen;
 
                 if (! CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
                     HANDLE_ERROR(TEXT("CryptAquireContext"), GetLastError());
@@ -322,27 +371,52 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 
                 // Изъять данные из контейнера
                 ofn.lpstrTitle = TEXT("Открыть файл контейнера");
+                ofn.nFilterIndex = 3;
                 if (GetOpenFileName(&ofn)) {
+                    pdlg.lpszTitle = NULL;
+                    pdlg.lpszPassword = lpszBuffer;
+                    pdlg.lpszQuery = TEXT("Пожалуйста, введите пароль для расшифровки данных:");
+                    if (! GetUserPassword(&pdlg)) {
+                        CryptReleaseContext(hProv, 0);
+                        break;
+                    }
+
                     try {
+                        hAesKey = PasswordToAesKey(hProv, lpszBuffer, _tcslen(lpszBuffer));
                         stego.open(lpszFilename);
                         stego.unstego((LPBYTE)&efh, sizeof(ENCFILE_HEADER));
+
+                        dwEncryptLen = sizeof(ENCFILE_HEADER);
+                        // Расшифровать заголовок
+                        if (! CryptDecrypt(hAesKey, NULL, FALSE, 0, (LPBYTE)&efh, &dwEncryptLen)) {
+                            throw win32::win32_error("CryptDecrypt");
+                        }
+
                         if (efh.dwMagic != ENCFILE_MAGIC) {
                             MessageBox(hWnd, TEXT("Контейнер не содержит стеганографических данных"),
                                 MSG_TITLE, MB_OK | MB_ICONINFORMATION);
+                            CryptDestroyKey(hAesKey);
                             CryptReleaseContext(hProv, 0);
                             break;
                         }
                         nHashSize = efh.wSignLen;
                         nDataSize = efh.dwSizeLow;
-                        lpData = new BYTE[efh.wDataOffset + nDataSize + nHashSize];
+                        dwEncryptLen = efh.wDataOffset + nDataSize + nHashSize;
+                        lpData = new BYTE[dwEncryptLen + 16];
                         lpbCheckHash = new BYTE[nHashSize];
                         lpEfh = (ENCFILE_HEADER*) lpData;
                         lpbData = (LPBYTE)lpEfh + efh.wDataOffset;
                         lpbHash = lpbData + nDataSize;
-                        stego.unstego((LPBYTE)lpData, efh.wDataOffset + nDataSize + nHashSize);
+                        stego.unstego((LPBYTE)lpData, dwEncryptLen);
+
+                        // Расшифровать данные
+                        if (! CryptDecrypt(hAesKey, NULL, FALSE, 0, (LPBYTE)lpData, &dwEncryptLen)) {
+                            throw win32::win32_error("CryptDecrypt");
+                        }
+
                         ComputeMD5Hash(hProv, lpbData, nDataSize, lpbCheckHash);
 
-                        DEBUG_DUMP(lpData, sizeof(ENCFILE_HEADER) + nDataSize + nHashSize)
+                        DEBUG_DUMP(lpData, dwEncryptLen)
                         DEBUG_DUMP(lpbCheckHash, nHashSize)
 
                         if (memcmp(lpbHash, lpbCheckHash, nHashSize) != 0) {
@@ -352,14 +426,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                             editor->readFromBuffer(lpbData, nDataSize);
                         }
 
-                        delete lpbCheckHash;
-                        delete (LPBYTE)lpData;
-                        stego.close();
                     } catch (win32::win32_error& ex) {
                         HANDLE_ERROR(ex.what(), ex.code())
                     } catch (std::exception& ex) {
                         HANDLE_ERROR(ex.what(), 0)
                     }
+                    CryptDestroyKey(hAesKey);
+                    delete lpbCheckHash;
+                    delete (LPBYTE)lpData;
+                    stego.close();
                 } else {
                     dwStatus = CommDlgExtendedError();
                     if (dwStatus != 0) {

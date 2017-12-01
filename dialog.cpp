@@ -4,7 +4,7 @@
  * @Email:  lev.vorobjev@rambler.ru
  * @Filename: dialog.cpp
  * @Last modified by:   Lev Vorobjev
- * @Last modified time: 30.11.2017
+ * @Last modified time: 01.12.2017
  * @License: MIT
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
@@ -35,7 +35,6 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
         case WM_INITDIALOG:
             lppd = (LPPASSWORD_DLG) lParam;
             lpszPassword = lppd->lpszPassword;
-            SetDlgItemText(hDlg, IDC_EDITPASS, lpszPassword);
             if (lppd->lpszTitle != NULL) {
                 SetWindowText(hDlg, lppd->lpszTitle);
             }

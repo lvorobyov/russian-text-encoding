@@ -4,7 +4,7 @@
  * @Email:  lev.vorobjev@rambler.ru
  * @Filename: crypt_tools.h
  * @Last modified by:   Lev Vorobjev
- * @Last modified time: 30.11.2017
+ * @Last modified time: 01.12.2017
  * @License: MIT
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
@@ -28,6 +28,6 @@ int ComputeMD5Hash(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen, LPBYTE
  * @param hProv дескриптор криптопровайдера, полученный функцией {@link CryptAcquireContext()}
  * @param lpszPassword пользовательский пароль
  * @param dwPasswordLen длина пароля
- * @param phKey дескриптор полученного в результате преобразования ключа шифрования
+ * @return дескриптор полученного в результате преобразования ключа шифрования
  */
-void PasswordToAesKey(HCRYPTPROV hProv, LPTSTR lpszPassword, DWORD dwPasswordLen, HCRYPTKEY *phKey);
+HCRYPTKEY PasswordToAesKey(HCRYPTPROV hProv, LPTSTR lpszPassword, DWORD dwPasswordLen);
