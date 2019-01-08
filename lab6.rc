@@ -58,3 +58,11 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Отмена", IDCANCEL, 176, 35, 50, 14, 0, WS_EX_LEFT
     DEFPUSHBUTTON   "OK", IDOK, 120, 35, 50, 14, 0, WS_EX_LEFT
 }
+
+
+
+//
+// Manifest resources
+//
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+1                  RT_MANIFEST    ".\\manifest.xml"
