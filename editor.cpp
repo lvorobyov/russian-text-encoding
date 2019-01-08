@@ -14,6 +14,7 @@
 #include <windows.h>
 #include "except.h"
 #include "editor.h"
+#include "encoding.h"
 
 void TextEditor::emptyFile() {
     SetWindowText(_hEdit, (LPTSTR) NULL);

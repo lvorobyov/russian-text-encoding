@@ -66,8 +66,8 @@ public:
         // Создать текстовое поле для вывода открытого файла
         GetClientRect(_hWndParent, &rcClient);
         _hEdit = CreateWindow(TEXT("EDIT"), NULL,
-            WS_VISIBLE | WS_CHILD | WS_HSCROLL | WS_VSCROLL |
-            ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL,
+            WS_VISIBLE | WS_CHILD | WS_VSCROLL |
+            ES_MULTILINE | ES_AUTOVSCROLL,
             rcClient.left, rcClient.top, rcClient.right, rcClient.bottom,
             _hWndParent, hMenu, hInst, NULL);
         _lpszText = new TCHAR[1];

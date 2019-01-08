@@ -29,13 +29,13 @@
 #define HANDLE_ERROR(lpszFunctionName, dwStatus) \
     MultiByteToWideChar(CP_ACP, 0, \
         lpszFunctionName, -1, lpszBuffer, BUFFER_SIZE); \
-    _stprintf(lpszBuffer, TEXT("%s error.\nStatus code: %d"), \
+    _stprintf(lpszBuffer, TEXT("%ls error.\nStatus code: %d"), \
         lpszBuffer, dwStatus); \
     MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONWARNING);
 
 #ifdef _DEBUG
 #define DEBUG_INFO(editor) \
-    _stprintf(lpszBuffer, TEXT("TextLength: %d\nStatus: %s\nText: %s"), \
+    _stprintf(lpszBuffer, TEXT("TextLength: %d\nStatus: %ls\nText: %ls"), \
         editor->getTextLength(), \
         editor->getModify() ? TEXT("MODIFIED") : TEXT("NOT MODIFIED"), \
         editor->getText()); \
@@ -170,7 +170,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 
                     editor->openFile(lpszFilename);
 
-                    _stprintf(lpszBuffer, TEXT("%s: %s"),
+                    _stprintf(lpszBuffer, TEXT("%ls: %ls"),
                         WND_TITLE, lpszFilename);
                     SetWindowText(hWnd, lpszBuffer);
 
@@ -204,7 +204,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 
                     EnableMenuItem(GetSubMenu(hMenu, 0), IDM_ITEM2, MF_BYCOMMAND | MF_GRAYED);
 
-                    _stprintf(lpszBuffer, TEXT("%s: %s"),
+                    _stprintf(lpszBuffer, TEXT("%ls: %ls"),
                         WND_TITLE, lpszFilename);
                     SetWindowText(hWnd, lpszBuffer);
                 } else {
