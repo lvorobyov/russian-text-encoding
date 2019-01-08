@@ -35,7 +35,7 @@ private:
     /**
      * Количество битов шифротекста на один байт контейнера
      */
-    static const int N = 2;
+    static const int N = 1;
 
 public:
     /**
