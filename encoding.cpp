@@ -18,6 +18,7 @@ UINT RecogniseEncoding(LPCBYTE lpData, size_t sz) {
     BYTE c; int d;
     float repeatRate = 1.0;
     int repeatCount = 0;
+    int allCount = 0;
     for (int i=0; i<sz; i++) {
         if (lpData[i] <= 0x7F)
             continue;
@@ -25,15 +26,15 @@ UINT RecogniseEncoding(LPCBYTE lpData, size_t sz) {
         if (c >= 0xC2) {
             d = ((c-0xC0) >> 4);
             d = d? d+1 : 2;
-            if (i < sz - d && lpData[i+d] == c) {
+            if (i < sz - d && lpData[i+d] == c)
                 repeatCount ++;
-            }
+            allCount ++;
         }
     }
     // Распознание многобайтовой кодировки по частоте повторения
     // одинаковых символов через один байт
     if (repeatCount) {
-        repeatRate = repeatCount / static_cast<float>(sz-2);
+        repeatRate = repeatCount / static_cast<float>(allCount);
         if (repeatRate > 0.1)
             return CP_UTF8;
     }
