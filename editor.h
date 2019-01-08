@@ -52,6 +52,11 @@ private:
      */
     UINT _cchText = 0;
 
+    /**
+     * Кодировка текста
+     */
+    UINT _codePage = CP_ACP;
+
 public:
     /**
      * Конструктор с параметрами

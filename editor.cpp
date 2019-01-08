@@ -27,6 +27,7 @@ void TextEditor::emptyFile() {
         CloseHandle(_hFile);
         _hFile = NULL;
     }
+    _codePage = CP_ACP;
 }
 
 void TextEditor::openFile(LPCTSTR lpszFilename) {
@@ -65,10 +66,11 @@ void TextEditor::openFile(LPCTSTR lpszFilename) {
     }
 
 #ifdef _UNICODE
-    nTextSize = MultiByteToWideChar(CP_UTF8, 0,
+    _codePage = RecogniseEncoding((LPBYTE)lpData,nFileSize);
+    nTextSize = MultiByteToWideChar(_codePage, 0,
         (LPCSTR)lpData, -1, NULL, 0);
     _lpszText = new TCHAR[nTextSize];
-    MultiByteToWideChar(CP_UTF8, 0,
+    MultiByteToWideChar(_codePage, 0,
         (LPCSTR)lpData, -1, _lpszText, nTextSize);
 #else
     nTextSize = nFileSize;
@@ -102,10 +104,10 @@ void TextEditor::saveFile() {
 
     nTextSize = _cchText;
 #ifdef _UNICODE
-    nFileSize = WideCharToMultiByte(CP_UTF8, 0,
+    nFileSize = WideCharToMultiByte(_codePage, 0,
         _lpszText, nTextSize, NULL, 0, NULL, NULL);
     lpData = new BYTE[nFileSize];
-    WideCharToMultiByte(CP_UTF8, 0,
+    WideCharToMultiByte(_codePage, 0,
         _lpszText, nTextSize, (LPSTR)lpData, nFileSize, NULL, NULL);
 #else
     nFileSize = nTextSize;
@@ -155,14 +157,14 @@ int TextEditor::writeToBuffer(LPVOID lpBuffer, int nBufferSize) {
 
     nTextSize = _cchText;
 #ifdef _UNICODE
-    nFileSize = WideCharToMultiByte(CP_UTF8, 0,
+    nFileSize = WideCharToMultiByte(_codePage, 0,
         _lpszText, nTextSize, NULL, 0, NULL, NULL);
     if (lpBuffer == NULL) {
         return nFileSize;
     }
     if (nFileSize > nBufferSize)
         nFileSize = nBufferSize;
-    WideCharToMultiByte(CP_UTF8, 0,
+    WideCharToMultiByte(_codePage, 0,
         _lpszText, nTextSize, (LPSTR)lpBuffer, nFileSize, NULL, NULL);
 #else
     nFileSize = nTextSize;
@@ -182,11 +184,12 @@ int TextEditor::readFromBuffer(LPVOID lpBuffer, int nBytesToRead) {
     int nTextSize;
 
 #ifdef _UNICODE
-    nTextSize = MultiByteToWideChar(CP_UTF8, 0,
+    _codePage = RecogniseEncoding((LPBYTE)lpBuffer,nFileSize);
+    nTextSize = MultiByteToWideChar(_codePage, 0,
         (LPCSTR)lpBuffer, nFileSize, NULL, 0);
     delete _lpszText;
     _lpszText = new TCHAR[nTextSize + 1];
-    MultiByteToWideChar(CP_UTF8, 0,
+    MultiByteToWideChar(_codePage, 0,
         (LPCSTR)lpBuffer, nFileSize, _lpszText, nTextSize);
     _lpszText[nTextSize] = 0;
 #else
