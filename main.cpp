@@ -18,7 +18,7 @@
 #include "crypt_tools.h"
 #include "resource.h"
 #include "dialog.h"
-#include <win32/win32_error.h>
+#include "except.h"
 
 #define IDC_EDITTEXT  40050
 
@@ -321,8 +321,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                         DEBUG_DUMP(lpData, dwEncryptLen)
 
                         hAesKey = PasswordToAesKey(hProv, lpszPassword, nPasswordLen);
-                        if (! CryptEncrypt(hAesKey, NULL, TRUE, 0, (BYTE*)lpData, &dwEncryptLen, dwEncryptLen + 16)) {
-                            throw win32::win32_error("CryptEncrypt");
+                        if (! CryptEncrypt(hAesKey, 0, TRUE, 0, (BYTE*)lpData, &dwEncryptLen, dwEncryptLen + 16)) {
+                            raise_system_error("CryptEncrypt");
                         }
                         stego.stego((LPBYTE)lpData, dwEncryptLen);
                         stego.save();
@@ -330,7 +330,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                         MessageBox(hWnd, TEXT("Данные внедрены в BMP"),
                             MSG_TITLE, MB_OK | MB_ICONINFORMATION);
 
-                    } catch (win32::win32_error& ex) {
+                    } catch (std::system_error& ex) {
                         HANDLE_ERROR(ex.what(), ex.code())
                     } catch (std::exception& ex) {
                         HANDLE_ERROR(ex.what(), 0)
@@ -390,8 +390,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 
                         dwEncryptLen = sizeof(ENCFILE_HEADER);
                         // Расшифровать заголовок
-                        if (! CryptDecrypt(hAesKey, NULL, FALSE, 0, (LPBYTE)&efh, &dwEncryptLen)) {
-                            throw win32::win32_error("CryptDecrypt");
+                        if (! CryptDecrypt(hAesKey, 0, FALSE, 0, (LPBYTE)&efh, &dwEncryptLen)) {
+                            raise_system_error("CryptDecrypt");
                         }
 
                         if (efh.dwMagic != ENCFILE_MAGIC) {
@@ -414,8 +414,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                         stego.unstego((LPBYTE)lpData, dwEncryptLen);
 
                         // Расшифровать данные
-                        if (! CryptDecrypt(hAesKey, NULL, TRUE, 0, (LPBYTE)lpData, &dwEncryptLen)) {
-                            throw win32::win32_error("CryptDecrypt");
+                        if (! CryptDecrypt(hAesKey, 0, TRUE, 0, (LPBYTE)lpData, &dwEncryptLen)) {
+                            raise_system_error("CryptDecrypt");
                         }
 
                         ComputeMD5Hash(hProv, lpbData, nDataSize, lpbCheckHash);
@@ -430,8 +430,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                             editor->readFromBuffer(lpbData, nDataSize);
                         }
 
-                    } catch (win32::win32_error& ex) {
-                        HANDLE_ERROR(ex.what(), ex.code())
+                    } catch (std::system_error& ex) {
+                        HANDLE_ERROR(ex.what(), ex.code().value())
                     } catch (std::exception& ex) {
                         HANDLE_ERROR(ex.what(), 0)
                     }

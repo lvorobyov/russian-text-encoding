@@ -11,7 +11,7 @@
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
 
-#include <windef.h>
+#include <windows.h>
 
 /**
  * StegoContainer

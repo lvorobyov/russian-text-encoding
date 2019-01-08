@@ -12,9 +12,7 @@
  */
 
 #include <windows.h>
-#include <win32/win32_error.h>
-#include <stdexcept>
-
+#include "except.h"
 #include "editor.h"
 
 void TextEditor::emptyFile() {
@@ -50,19 +48,19 @@ void TextEditor::openFile(LPCTSTR lpszFilename) {
         0, NULL, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, NULL);
     if (_hFile == INVALID_HANDLE_VALUE) {
-        throw win32::win32_error("CreateFile");
+        raise_system_error("CreateFile");
     }
 
     hFileMapping = CreateFileMapping(_hFile, NULL,
         PAGE_READONLY | SEC_COMMIT, 0, 0, NULL);
     if (hFileMapping == NULL) {
-        throw win32::win32_error("CreateFileMapping");
+        raise_system_error("CreateFileMapping");
     }
 
     nFileSize = GetFileSize(_hFile, NULL);
     lpData = MapViewOfFile(hFileMapping, FILE_MAP_READ, 0, 0, 0);
     if (lpData == NULL) {
-        throw win32::win32_error("MapViewOfFile");
+        raise_system_error("MapViewOfFile");
     }
 
 #ifdef _UNICODE
@@ -128,7 +126,7 @@ void TextEditor::saveFile(LPCTSTR lpszFilename) {
         0, NULL, CREATE_ALWAYS,
         FILE_ATTRIBUTE_NORMAL, NULL);
     if (hNewFile == INVALID_HANDLE_VALUE) {
-        throw win32::win32_error("CreateFile");
+        raise_system_error("CreateFile");
     }
 
     // Заменить открытый файл новым

@@ -6,6 +6,7 @@ include(CsoiWin)
 set(CMAKE_CXX_STANDARD 14)
 
 include_directories(.)
+include_directories(../../Lab4/src)
 add_definitions(-D_UNICODE -DUNICODE)
 
 aux_source_directory(. SRCS)

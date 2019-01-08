@@ -12,8 +12,7 @@
  */
 
 #include "stego.h"
-#include <win32/win32_error.h>
-#include <stdexcept>
+#include "except.h"
 
 void StegoContainer::open(LPCTSTR lpszFilename) {
     if (_hFile != NULL) {
@@ -32,18 +31,18 @@ void StegoContainer::open(LPCTSTR lpszFilename) {
         0, NULL, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, NULL);
     if (_hFile == INVALID_HANDLE_VALUE) {
-        throw win32::win32_error("CreateFile");
+        raise_system_error("CreateFile");
     }
 
     nFileSize = GetFileSize(_hFile, NULL);
     _hglbStego = GlobalAlloc(GMEM_FIXED, nFileSize);
     lpStego = (LPVOID) GlobalLock(_hglbStego);
     if (lpStego == NULL) {
-        throw win32::win32_error("GlobalLock");
+        raise_system_error("GlobalLock");
     }
 
     if (! ReadFile(_hFile, lpStego, nFileSize, &dwBytesRead, NULL)) {
-        throw win32::win32_error("ReadFile");
+        raise_system_error("ReadFile");
     }
 
     wBmpType = ((LPBITMAPFILEHEADER)lpStego)->bfType;
@@ -69,12 +68,12 @@ void StegoContainer::save() {
 
     lpStego = (LPVOID) GlobalLock(_hglbStego);
     if (lpStego == NULL) {
-        throw win32::win32_error("GlobalLock");
+        raise_system_error("GlobalLock");
     }
 
     SetFilePointer(_hFile, 0, NULL, FILE_BEGIN);
     if (! WriteFile(_hFile, lpStego, nFileSize, &dwBytesWritten, NULL)) {
-        throw win32::win32_error("ReadFile");
+        raise_system_error("ReadFile");
     }
 
     GlobalUnlock(_hglbStego);
@@ -87,7 +86,7 @@ void StegoContainer::save(LPCTSTR lpszFilename) {
         0, NULL, CREATE_ALWAYS,
         FILE_ATTRIBUTE_NORMAL, NULL);
     if (hNewFile == INVALID_HANDLE_VALUE) {
-        throw win32::win32_error("CreateFile");
+        raise_system_error("CreateFile");
     }
 
     // Заменить открытый файл новым
@@ -121,7 +120,7 @@ int StegoContainer::stego(LPBYTE lpbData, int nDataLen) {
 	DWORD dwSizeImage;
     lpStego = (LPVOID) GlobalLock(_hglbStego);
     if (lpStego == NULL) {
-        throw win32::win32_error("GlobalLock");
+        raise_system_error("GlobalLock");
     }
 
     bmpHeader = (LPBITMAPFILEHEADER)lpStego;
@@ -176,7 +175,7 @@ int StegoContainer::unstego(LPBYTE lpbData, int nDataMaxLen) {
 
     lpStego = (LPVOID) GlobalLock(_hglbStego);
     if (lpStego == NULL) {
-        throw win32::win32_error("GlobalLock");
+        raise_system_error("GlobalLock");
     }
 
     bmpHeader = (LPBITMAPFILEHEADER)lpStego;
