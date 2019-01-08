@@ -3,6 +3,11 @@
 //
 
 #include "encoding.h"
+//#include <algorithm>
+#include <array>
+//#include <numeric>
+
+using namespace std;
 
 UINT RecogniseEncoding(LPCBYTE lpData, size_t sz) {
     if (sz >= sizeof(DWORD)) {
@@ -19,6 +24,7 @@ UINT RecogniseEncoding(LPCBYTE lpData, size_t sz) {
     float repeatRate = 1.0;
     int repeatCount = 0;
     int allCount = 0;
+    array<int,8> counts{};
     for (int i=0; i<sz; i++) {
         if (lpData[i] <= 0x7F)
             continue;
@@ -30,6 +36,7 @@ UINT RecogniseEncoding(LPCBYTE lpData, size_t sz) {
                 repeatCount ++;
             allCount ++;
         }
+        counts[(c-0x80)>>4]++;
     }
     // Распознание многобайтовой кодировки по частоте повторения
     // одинаковых символов через один байт
@@ -38,7 +45,20 @@ UINT RecogniseEncoding(LPCBYTE lpData, size_t sz) {
         if (repeatRate > 0.1)
             return CP_UTF8;
     }
-
-
+    // Распознаем однобайтовоую кодировку по частоте появления
+    // в тексте символов кириллицы
+    //allCount = accumulate(counts.begin(),counts.end(),0);
+    counts[0] += counts[1];
+    counts[2] += counts[6];
+    counts[3] += counts[4];
+    counts[4] += counts[5];
+    counts[5] += counts[6];
+    counts[6] += counts[7];
+    if (counts[4] > counts[6])
+        return CP_KOI8R;
+    if (counts[0] > counts[4])
+        return 866;
+    if (counts[3] > counts[4])
+        return CP_ISO_5;
     return CP_ACP;
 }
