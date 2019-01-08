@@ -134,19 +134,19 @@ int StegoContainer::stego(LPBYTE lpbData, int nDataLen) {
 	dwSizeImage = dwBytes * bmpInfo->biHeight;
 
 	if (lpbData == NULL) {
-		nResult = dwSizeImage * 2 / 8;
+		nResult = dwSizeImage * N / 8;
 	} else {
-        if (nDataLen > dwSizeImage * 2 / 8) {
+        if (nDataLen > dwSizeImage * N / 8) {
             GlobalUnlock(_hglbStego);
             throw std::invalid_argument("nDataLen greater than maximal data lenght");
         }
 
 		LPBYTE lpbPixel = (LPBYTE)lpStego + bmpHeader->bfOffBits;
-		for (int i=0; i<bmpInfo->biHeight && nResult < nDataLen; i++) {
-			for (int j=0; j < dwBytes / 4 && nResult < nDataLen; j++) {
-				for (int k=0; k<4; k++) {
-					lpbPixel[4*j + k] &= 0xFC;
-					lpbPixel[4*j + k] |= ((*lpbData >> (6 - k*2)) & 0x03);
+		for (int i=0; i < bmpInfo->biHeight && nResult < nDataLen; i++) {
+			for (int j=0; j < dwBytes * N/8 && nResult < nDataLen; j++) {
+				for (int k=0; k<8/N; k++) {
+					lpbPixel[8/N*j + k] &= (~0U<<N);
+					lpbPixel[8/N*j + k] |= ((*lpbData >> (8-N - k*N)) & ~(~0U<<N));
 				}
 				lpbData++;
 				nResult++;
@@ -190,12 +190,12 @@ int StegoContainer::unstego(LPBYTE lpbData, int nDataMaxLen) {
 
     LPBYTE lpbPixel = (LPBYTE)lpStego + bmpHeader->bfOffBits;
     BYTE bData;
-    for (int i=0; i<bmpInfo->biHeight && nResult < nDataMaxLen; i++) {
-        for (int j=0; j < dwBytes / 4 && nResult < nDataMaxLen; j++) {
+    for (int i=0; i < bmpInfo->biHeight && nResult < nDataMaxLen; i++) {
+        for (int j=0; j < dwBytes * 8/N && nResult < nDataMaxLen; j++) {
             bData = 0;
-            for (int k=0; k<4; k++) {
-                bData <<= 2;
-                bData |= (lpbPixel[4*j + k] & 0x03);
+            for (int k=0; k<8/N; k++) {
+                bData <<= N;
+                bData |= (lpbPixel[8/N*j + k] & ~(~0U<<N));
             }
             *lpbData = bData;
             lpbData++;

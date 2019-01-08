@@ -32,6 +32,11 @@ private:
      */
     HGLOBAL _hglbStego = NULL;
 
+    /**
+     * Количество битов шифротекста на один байт контейнера
+     */
+    static const int N = 2;
+
 public:
     /**
      * open(fileName)
