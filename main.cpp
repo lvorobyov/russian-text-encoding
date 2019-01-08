@@ -29,7 +29,7 @@
 #define HANDLE_ERROR(lpszFunctionName, dwStatus) \
     MultiByteToWideChar(CP_ACP, 0, \
         lpszFunctionName, -1, lpszBuffer, BUFFER_SIZE); \
-    _stprintf(lpszBuffer, TEXT("%ls error.\nStatus code: %d"), \
+    _stprintf(lpszBuffer, TEXT("%ls error.\nStatus code: %0X"), \
         lpszBuffer, dwStatus); \
     MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONWARNING);
 
