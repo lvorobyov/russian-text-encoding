@@ -33,7 +33,7 @@
         lpszBuffer, dwStatus); \
     MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONWARNING);
 
-#ifndef NDEBUG
+#ifdef _DEBUG
 #define DEBUG_INFO(editor) \
     _stprintf(lpszBuffer, TEXT("TextLength: %d\nStatus: %ls\nText: %ls"), \
         editor->getTextLength(), \
@@ -45,7 +45,7 @@
     for (int i = 0; i < dwLenght; i++) { \
         _stprintf(lpszBuffer + 3 * i, (i % 16 == 15) ? TEXT("%02X\n") : TEXT("%02X "), ((LPBYTE)lpData)[i]); \
     } \
-    MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONINFORMATION);
+    MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK);
 #else
 #define DEBUG_INFO(editor)
 #define DEBUG_DUMP(lpData, dwLenght)
