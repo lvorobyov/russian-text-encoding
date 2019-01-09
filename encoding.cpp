@@ -57,12 +57,13 @@ UINT RecogniseEncoding(LPCBYTE lpData, size_t sz) {
     counts[4] += counts[5];
     counts[5] += counts[6];
     counts[6] += counts[7];
-    if (counts[4] > counts[6])
-        return (iYiCount)? CP_KOI8U : CP_KOI8R;
     if (counts[0] > counts[4] + counts[7])
         return 866;
-    if (counts[3] > counts[4]
-        && counts[5] > counts[6])
+    if (counts[4] < counts[7])
+        return 1251;
+    if (counts[3] > counts[6])
+        return (iYiCount)? CP_KOI8U : CP_KOI8R;
+    if (counts[5] > counts[3])
         return CP_ISO_5;
     return CP_ACP;
 }

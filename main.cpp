@@ -33,7 +33,7 @@
         lpszBuffer, dwStatus); \
     MessageBox(hWnd, lpszBuffer, MSG_TITLE, MB_OK | MB_ICONWARNING);
 
-#ifdef _DEBUG
+#ifndef NDEBUG
 #define DEBUG_INFO(editor) \
     _stprintf(lpszBuffer, TEXT("TextLength: %d\nStatus: %ls\nText: %ls"), \
         editor->getTextLength(), \
