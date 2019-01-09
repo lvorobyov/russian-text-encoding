@@ -61,6 +61,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     LPCTSTR lpszClass = TEXT("SPAD_Lab6_Window");
     LPCTSTR lpszTitle = WND_TITLE;
     HWND hWnd;
+    HACCEL hAccel;
     MSG msg = {0};
     BOOL status;
 
@@ -74,10 +75,16 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
     ShowWindow(hWnd, nCmdShow);
 
+    hAccel = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR1));
+    if (!hAccel)
+        return 3;
+
     while ((status = GetMessage(&msg, NULL, 0, 0 )) != 0) {
-        if (status == -1) return 3;
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        if (status == -1) return 4;
+        if (! TranslateAccelerator(hWnd, hAccel, &msg)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
     }
 
     return msg.wParam;

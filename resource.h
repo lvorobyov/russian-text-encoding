@@ -4,6 +4,7 @@
 
 #define IDR_APPMENU                             100
 #define IDD_PASSWORDDLG                         102
+#define IDR_ACCELERATOR1                        103
 #define IDC_LBLQUERY                            40000
 #define IDM_ITEM1                               40000
 #define IDM_ITEM2                               40001

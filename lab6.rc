@@ -18,11 +18,11 @@ IDR_APPMENU MENUEX
 {
     POPUP "&Файл", 0, 0, 0
     {
-        MENUITEM "&Открыть...", IDM_ITEM1, 0, 0
-        MENUITEM "&Сохранить", IDM_ITEM2, 0, MFS_GRAYED
-        MENUITEM "&Сохранить как...", IDM_ITEM3, 0, 0
+        MENUITEM "&Открыть...\tCtrl+O", IDM_ITEM1, 0, 0
+        MENUITEM "&Сохранить\tCtr+S", IDM_ITEM2, 0, MFS_GRAYED
+        MENUITEM "&Сохранить как..\tCtrl+Shift+S.", IDM_ITEM3, 0, 0
         MENUITEM "----", 0, MFT_SEPARATOR, 0
-        MENUITEM "&Закрыть", IDM_ITEM4, 0, 0
+        MENUITEM "&Закрыть\tCtrl+W", IDM_ITEM4, 0, 0
     }
     POPUP "&Правка", 0, 0, 0
     {
@@ -57,6 +57,20 @@ FONT 8, "Ms Shell Dlg"
     LTEXT           "Пожалуйста, введите пароль для встраивания в контейнер:", IDC_LBLQUERY, 6, 6, 220, 9, SS_LEFT, WS_EX_LEFT
     PUSHBUTTON      "Отмена", IDCANCEL, 176, 35, 50, 14, 0, WS_EX_LEFT
     DEFPUSHBUTTON   "OK", IDOK, 120, 35, 50, 14, 0, WS_EX_LEFT
+}
+
+
+
+//
+// Accelerator resources
+//
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDR_ACCELERATOR1 ACCELERATORS
+{
+    "O",            IDM_ITEM1, VIRTKEY, CONTROL
+    "S",            IDM_ITEM2, VIRTKEY, CONTROL
+    "S",            IDM_ITEM3, VIRTKEY, CONTROL, SHIFT
+    "W",            IDM_ITEM4, VIRTKEY, CONTROL
 }
 
 
