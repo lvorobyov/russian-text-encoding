@@ -20,7 +20,7 @@ IDR_APPMENU MENUEX
     {
         MENUITEM "&Открыть...\tCtrl+O", IDM_ITEM1, 0, 0
         MENUITEM "&Сохранить\tCtr+S", IDM_ITEM2, 0, MFS_GRAYED
-        MENUITEM "&Сохранить как..\tCtrl+Shift+S.", IDM_ITEM3, 0, 0
+        MENUITEM "&Сохранить как..\tCtrl+Shift+S", IDM_ITEM3, 0, 0
         MENUITEM "----", 0, MFT_SEPARATOR, 0
         MENUITEM "&Закрыть\tCtrl+W", IDM_ITEM4, 0, 0
     }
@@ -37,8 +37,8 @@ IDR_APPMENU MENUEX
     }
     POPUP "&Стеганография", 0, 0, 0
     {
-        MENUITEM "&Встроить в BMP...", IDM_ITEMSTEGO, 0, 0
-        MENUITEM "&Получить из BMP...", IDM_ITEMUNSTEGO, 0, 0
+        MENUITEM "&Встроить в BMP...\tCtrl+I", IDM_ITEMSTEGO, 0, 0
+        MENUITEM "&Получить из BMP...\tCtrl+U", IDM_ITEMUNSTEGO, 0, 0
     }
 }
 
