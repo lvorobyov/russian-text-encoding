@@ -191,7 +191,7 @@ int StegoContainer::unstego(LPBYTE lpbData, int nDataMaxLen) {
     LPBYTE lpbPixel = (LPBYTE)lpStego + bmpHeader->bfOffBits;
     BYTE bData;
     for (int i=0; i < bmpInfo->biHeight && nResult < nDataMaxLen; i++) {
-        for (int j=0; j < dwBytes * 8/N && nResult < nDataMaxLen; j++) {
+        for (int j=0; j < dwBytes * N/8 && nResult < nDataMaxLen; j++) {
             bData = 0;
             for (int k=0; k<8/N; k++) {
                 bData <<= N;

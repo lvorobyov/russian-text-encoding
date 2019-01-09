@@ -11,6 +11,7 @@
  * @Copyright: Copyright (c) 2017 Lev Vorobjev
  */
 
+#pragma once
 #include <windows.h>
 
 /**
