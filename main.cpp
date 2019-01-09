@@ -27,7 +27,7 @@
 #define BUFFER_SIZE 512
 
 #define HANDLE_ERROR(lpszFunctionName, dwStatus) \
-    MultiByteToWideChar(CP_ACP, 0, \
+    MultiByteToWideChar(CP_UTF8, 0, \
         lpszFunctionName, -1, lpszBuffer, BUFFER_SIZE); \
     _stprintf(lpszBuffer, TEXT("%ls error.\nStatus code: %0X"), \
         lpszBuffer, dwStatus); \
@@ -402,11 +402,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
                         }
 
                         if (efh.dwMagic != ENCFILE_MAGIC) {
-                            MessageBox(hWnd, TEXT("Контейнер не содержит стеганографических данных"),
-                                MSG_TITLE, MB_OK | MB_ICONINFORMATION);
-                            CryptDestroyKey(hAesKey);
-                            CryptReleaseContext(hProv, 0);
-                            break;
+                            throw runtime_error("Контейнер не содержит стеганографических данных");
                         }
                         nHashSize = efh.wSignLen;
                         nDataSize = efh.dwSizeLow;
