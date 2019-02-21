@@ -12,3 +12,6 @@ add_definitions(-D_UNICODE -DUNICODE)
 aux_source_directory(. SRCS)
 add_executable(${PROJECT_NAME} WIN32
         ${SRCS} ${PROJECT_NAME}.rc)
+
+add_library(encoding STATIC encoding.cpp)
+install(TARGETS encoding ARCHIVE DESTINATION lib)
